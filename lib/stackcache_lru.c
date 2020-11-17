@@ -314,6 +314,30 @@ static int __init stack_cache_init(void)
 
 /* ===== Public methods =================================================== */
 
+struct insert_history_record {
+	unsigned long ptr;
+	size_t size;
+};
+
+#define INSERT_HISTORY_RECORDS_CNT (1<<24)
+static struct insert_history_record inserted[INSERT_HISTORY_RECORDS_CNT];
+static atomic64_t insert_pos = ATOMIC_INIT(0);
+
+bool stack_cache_check_history(unsigned long ptr)
+{
+	int i;
+
+	for (i = 0; i < INSERT_HISTORY_RECORDS_CNT; i++) {
+		if (inserted[i].size == 0)
+			break;
+
+		if (ptr >= inserted[i].ptr && ptr - inserted[i].ptr < inserted[i].size)
+			return true;
+	}
+
+	return false;
+}
+
 void stack_cache_insert(const volatile void *object, size_t size, unsigned trace_type,
 						size_t n_entries, const unsigned long *entries)
 {
@@ -327,6 +351,12 @@ void stack_cache_insert(const volatile void *object, size_t size, unsigned trace
 	/* If it is not initialized yet. */
 	if (unlikely(READ_ONCE(ctx->buffer) == NULL))
 	    goto error;
+
+	if (size > 0) {
+		size_t insert_at = atomic64_fetch_inc(&insert_pos) % INSERT_HISTORY_RECORDS_CNT;
+		inserted[insert_at].ptr = (unsigned long)object;
+		inserted[insert_at].size = size;
+	}
 
 	/* Just skip the insertion if the CPU is already doing it. */
 	if (spin_trylock_irqsave(&ctx->lock, flags) == 0)

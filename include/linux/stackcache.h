@@ -66,4 +66,10 @@ struct stack_cache_response {
 size_t stack_cache_lookup(const volatile void *ptr, size_t size,
 						  struct stack_cache_response *entries, unsigned int nentries);
 
+/**
+ * stack_cache_check_history - debug function that determine whether an object that contains @ptr
+ * has been passed to stackcache after stackcache was initialised.
+ */
+bool stack_cache_check_history(unsigned long ptr);
+
 #endif /* _LINUX_STACKCACHE_H */

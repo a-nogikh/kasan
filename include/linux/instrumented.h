@@ -11,6 +11,7 @@
 #include <linux/kasan-checks.h>
 #include <linux/kcsan-checks.h>
 #include <linux/types.h>
+#include <linux/stackcache_hitrate.h>
 
 /**
  * instrument_read - instrument regular read access
@@ -68,8 +69,6 @@ static __always_inline void instrument_read_write(const volatile void *v, size_t
  */
 static __always_inline void instrument_atomic_read(const volatile void *v, size_t size)
 {
-	kasan_check_read(v, size);
-	kcsan_check_atomic_read(v, size);
 }
 
 /**
@@ -83,8 +82,6 @@ static __always_inline void instrument_atomic_read(const volatile void *v, size_
  */
 static __always_inline void instrument_atomic_write(const volatile void *v, size_t size)
 {
-	kasan_check_write(v, size);
-	kcsan_check_atomic_write(v, size);
 }
 
 /**
@@ -98,8 +95,6 @@ static __always_inline void instrument_atomic_write(const volatile void *v, size
  */
 static __always_inline void instrument_atomic_read_write(const volatile void *v, size_t size)
 {
-	kasan_check_write(v, size);
-	kcsan_check_atomic_read_write(v, size);
 }
 
 /**

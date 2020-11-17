@@ -36,6 +36,7 @@
 #include <linux/types.h>
 #include <linux/vmalloc.h>
 #include <linux/bug.h>
+#include <linux/stackcache_hitrate.h>
 
 #include "kasan.h"
 #include "../slab.h"
@@ -171,6 +172,8 @@ static __always_inline bool check_memory_region_inline(unsigned long addr,
 {
 	if (unlikely(size == 0))
 		return true;
+
+	stack_cache_memory_access((const volatile void*)addr, size);
 
 	if (unlikely(addr + size < addr))
 		return !kasan_report(addr, size, write, ret_ip);
