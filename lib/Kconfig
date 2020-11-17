@@ -656,15 +656,20 @@ choice
 
 config STACKCACHE_LRU
 	bool "Use the LRU implementation for the stack cache"
+	select STACKCACHE_COMMON
 	help
 	 Use a stack cache implementation that relies on ring buffers and LRU caches.
 
 config STACKCACHE_RB
 	bool "Use the simplest (ring buffer) implementation for the stack cache"
+	select STACKCACHE_COMMON
 	help
 	 Use a stack cache implementation that relies on ring buffers only.
 
 endchoice
+
+config STACKCACHE_COMMON
+	bool
 
 config SBITMAP
 	bool

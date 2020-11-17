@@ -385,17 +385,6 @@ static inline bool shadow_invalid(u8 tag, s8 shadow_byte)
 	return false;
 }
 
-static inline void save_to_stackcache(short trace_type, const volatile void *object, size_t size) {
-	unsigned long entries[KASAN_STACK_DEPTH];
-	unsigned int nr_entries;
-
-	nr_entries = stack_trace_save(entries, ARRAY_SIZE(entries), 0);
-	/* Not sure if this is necessary. */
-	nr_entries = filter_irq_stacks(entries, nr_entries);
-
-	stack_cache_insert(object, size, trace_type, nr_entries, entries);
-}
-
 static bool __kasan_slab_free(struct kmem_cache *cache, void *object,
 			      unsigned long ip, bool quarantine)
 {
@@ -431,7 +420,7 @@ static bool __kasan_slab_free(struct kmem_cache *cache, void *object,
 			unlikely(!(cache->flags & SLAB_KASAN)))
 		return false;
 
-	save_to_stackcache(KASAN_STACKCACHE_FREE, object, cache->object_size);
+    stack_cache_save(KASAN_STACKCACHE_FREE, object, cache->object_size);
 	kasan_set_free_info(cache, object, tag);
 
 	quarantine_put(get_free_info(cache, object), cache);
@@ -470,7 +459,7 @@ static void *__kasan_kmalloc(struct kmem_cache *cache, const void *object,
 	kasan_poison_shadow((void *)redzone_start, redzone_end - redzone_start,
 		KASAN_KMALLOC_REDZONE);
 
-	save_to_stackcache(KASAN_STACKCACHE_ALLOC, object, size);
+    stack_cache_save(KASAN_STACKCACHE_ALLOC, object, size);
 	if (cache->flags & SLAB_KASAN)
 		kasan_set_track(&get_alloc_info(cache, object)->alloc_track, flags);
 

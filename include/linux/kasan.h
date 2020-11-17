@@ -103,6 +103,11 @@ void kasan_restore_multi_shot(bool enabled);
 
 #else /* CONFIG_KASAN */
 
+#include <linux/stackcache.h>
+
+#define _NOKASAN_SAVE_ALLOC 0
+#define _NOKASAN_SAVE_FREE 1
+
 static inline void kasan_unpoison_shadow(const void *address, size_t size) {}
 
 static inline void kasan_unpoison_task_stack(struct task_struct *task) {}
@@ -130,6 +135,7 @@ static inline void *kasan_init_slab_obj(struct kmem_cache *cache,
 
 static inline void *kasan_kmalloc_large(void *ptr, size_t size, gfp_t flags)
 {
+	stack_cache_save(_NOKASAN_SAVE_ALLOC, ptr, size);
 	return ptr;
 }
 static inline void kasan_kfree_large(void *ptr, unsigned long ip) {}
@@ -137,22 +143,26 @@ static inline void kasan_poison_kfree(void *ptr, unsigned long ip) {}
 static inline void *kasan_kmalloc(struct kmem_cache *s, const void *object,
 				size_t size, gfp_t flags)
 {
+	stack_cache_save(_NOKASAN_SAVE_ALLOC, object, size);
 	return (void *)object;
 }
 static inline void *kasan_krealloc(const void *object, size_t new_size,
 				 gfp_t flags)
 {
+	stack_cache_save(_NOKASAN_SAVE_ALLOC, object, new_size);
 	return (void *)object;
 }
 
 static inline void *kasan_slab_alloc(struct kmem_cache *s, void *object,
 				   gfp_t flags)
 {
+	stack_cache_save_kmem(_NOKASAN_SAVE_ALLOC, object, s);
 	return object;
 }
 static inline bool kasan_slab_free(struct kmem_cache *s, void *object,
 				   unsigned long ip)
 {
+	stack_cache_save_kmem(_NOKASAN_SAVE_FREE, object, s);
 	return false;
 }
 

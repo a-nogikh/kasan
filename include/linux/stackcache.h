@@ -66,4 +66,15 @@ struct stack_cache_response {
 size_t stack_cache_lookup(const volatile void *ptr, size_t size,
 						  struct stack_cache_response *entries, unsigned int nentries);
 
+struct kmem_cache;
+
+#ifdef CONFIG_STACKCACHE_COMMON
+void stack_cache_save(short trace_type, const volatile void *ptr, size_t size);
+void stack_cache_save_kmem(short trace_type, const volatile void *ptr, struct kmem_cache *s);
+#else
+inline void stack_cache_save(short trace_type, const volatile void *ptr, size_t size) { }
+inline void stack_cache_save_kmem(short trace_type, const volatile void *ptr,
+								  struct kmem_cache *s) {}
+#endif
+
 #endif /* _LINUX_STACKCACHE_H */
